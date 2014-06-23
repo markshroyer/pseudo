@@ -1,5 +1,6 @@
 // Limited pseudocode interpreter
 var Pseudo = (function () {
+    "use strict";
 
     var Token = function (type, text) {
         this.type = type;
