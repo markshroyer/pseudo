@@ -4,10 +4,10 @@ var Pseudo = (function () {
 
     // Builds the dictionary of token prototypes used by the parser.  Scope
     // resolution of name tokens is left for runtime.
-    var token_set = (function () {
-        var _prototypes = {};
+    var tproto = (function () {
+        var _p = {};
 
-        var token_prototype = {
+        var token_proto = {
             nud: function () {
                 throw "Undefined";
             },
@@ -15,48 +15,42 @@ var Pseudo = (function () {
                 throw "Missing operator";
             }
         };
+        _p['(token)'] = token_proto;
 
-        var is_token = function (t) {
-            return token_prototype.isPrototypeOf(t);
-        };
-
-        var literal_prototype = Object.create(token_prototype);
-        literal_prototype.arity = 'unary';
-        literal_prototype.nud = function (pseudo) {
+        var literal_proto = Object.create(token_proto);
+        literal_proto.arity = 'unary';
+        literal_proto.nud = function (pseudo) {
             return this;
         };
-        _prototypes['(literal)'] = literal_prototype;
+        _p['(literal)'] = literal_proto;
 
-        var end_prototype = Object.create(token_prototype);
-        end_prototype.lbp = 0;
-        _prototypes['(end)'] = end_prototype;
+        var end_proto = Object.create(token_proto);
+        end_proto.lbp = 0;
+        _p['(end)'] = end_proto;
 
-        var infix_prototype = Object.create(token_prototype);
-        infix_prototype.arity = 'binary';
-        infix_prototype.led = function (pseudo, left) {
+        var infix_proto = Object.create(token_proto);
+        infix_proto.arity = 'binary';
+        infix_proto.led = function (pseudo, left) {
             this.first = left;
             this.second = pseudo.expression(this.lbp);
             return this;
         };
 
-        var define_infix = function (id, bp, led) {
-            var t = Object.create(infix_prototype);
+        var infix = function (id, bp, led) {
+            var t = Object.create(infix_proto);
             t.id = id;
             t.lbp = bp;
             if (led) {
                 t.led = led;
             }
-            _prototypes[id] = t;
+            _p[id] = t;
             return t;
         };
 
-        define_infix('+', 10);
-        define_infix('*', 20);
+        infix('+', 10);
+        infix('*', 20);
 
-        return {
-            prototypes: _prototypes,
-            is_token: is_token
-        };
+        return _p;
     })();
 
     var Pseudo = function (text, env) {
@@ -79,21 +73,21 @@ var Pseudo = (function () {
             } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
                 //result.push(new Token('name', m[0]));
             } else if (m = text.match(/^[0-9]+/)) {
-                result.push(Object.create(token_set.prototypes['(literal)'], {
+                result.push(Object.create(tproto['(literal)'], {
                     value: {
                         value: parseFloat(m[0]),
                         writeable: false
                     }
                 }));
             } else if (m = text.match(/^:|\+|\-|\*|\/|<=?|>=?|\[|\]|=/)) {
-                result.push(Object.create(token_set.prototypes[m[0]]));
+                result.push(Object.create(tproto[m[0]]));
             } else {
                 console.log("Tokenization error: '" + text + "'");
                 return;
             }
             text = text.substring(m[0].length);
         }
-        result.push(Object.create(token_set.prototypes['(end)']));
+        result.push(Object.create(tproto['(end)']));
         return result;
     };
 
