@@ -7,46 +7,69 @@ var Pseudo = (function () {
     var tproto = (function () {
         var _p = {};
 
-        var token_proto = {
+        var tokenp = {
             nud: function () {
                 throw "Undefined";
             },
             led: function () {
                 throw "Missing operator";
+            },
+            repr: function () {
+                if (this.value) {
+                    return this.value;
+                } else {
+                    return this.id;
+                }
             }
         };
-        _p['(token)'] = token_proto;
+        _p['(token)'] = tokenp;
 
-        var literal_proto = Object.create(token_proto);
-        literal_proto.arity = 'unary';
-        literal_proto.nud = function () {
+        var literalp = Object.create(tokenp);
+        literalp.arity = 'unary';
+        literalp.nud = function () {
             return this;
         };
-        literal_proto.evl = function () {
+        literalp.evl = function () {
             return this.value;
         };
-        _p['(literal)'] = literal_proto;
+        _p['(literal)'] = literalp;
 
-        var end_proto = Object.create(token_proto);
-        end_proto.lbp = 0;
-        _p['(end)'] = end_proto;
+        var endp = Object.create(tokenp);
+        endp.id = '(end)';
+        endp.lbp = 0;
+        _p['(end)'] = endp;
 
-        var infix_proto = Object.create(token_proto);
-        infix_proto.arity = 'binary';
-        infix_proto.led = function (left) {
+        var infixp = Object.create(tokenp);
+        infixp.arity = 'binary';
+        infixp.led = function (left) {
             this.first = left;
             this.second = this.pseudo.expression(this.lbp);
             return this;
         };
-
         var infix = function (id, bp, evl) {
-            var t = Object.create(infix_proto);
+            var t = Object.create(infixp);
             t.id = id;
             t.lbp = bp;
             t.evl = evl;
             _p[id] = t;
             return t;
         };
+
+        var rparenp = Object.create(tokenp);
+        rparenp.id = ')';
+        rparenp.lbp = 0;
+        _p[')'] = rparenp;
+
+        var lparenp = Object.create(tokenp);
+        lparenp.id = '(';
+        lparenp.lbp = 0;
+        lparenp.nud = function () {
+            var expr = this.pseudo.expression(0);
+            //this.pseudo.match(rparenp);
+            this.pseudo.next();
+            return expr;
+        };
+        _p['('] = lparenp;
 
         infix('+', 100, function () {
             return this.first.evl() + this.second.evl();
@@ -63,6 +86,9 @@ var Pseudo = (function () {
 
         this.text = text;
         this.env = env || {};
+
+        // For debugging purposes
+        this.tproto = tproto;
     };
 
     Pseudo.prototype.tokenize = function () {
@@ -71,13 +97,14 @@ var Pseudo = (function () {
         var m;
 
         while (text.length > 0) {
-            if (m = text.match(/^\n(\ *)/)) {
-                //result.push(new Token('indent', m[1]));
-            } else if (m = text.match(/^\ +/)) {
-                // Ignore non-indent whitespace
-            } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
-                //result.push(new Token('name', m[0]));
-            } else if (m = text.match(/^([0-9]*\.)?[0-9]+/)) {
+            // if (m = text.match(/^\n(\ *)/)) {
+            //     //result.push(new Token('indent', m[1]));
+            // } else if (m = text.match(/^\ +/)) {
+            //     // Ignore non-indent whitespace
+            // } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
+            //     //result.push(new Token('name', m[0]));
+
+            if (m = text.match(/^([0-9]*\.)?[0-9]+/)) {
                 result.push(Object.create(tproto['(literal)'], {
                     value: {
                         value: parseFloat(m[0]),
@@ -88,7 +115,21 @@ var Pseudo = (function () {
                         writeable: false
                     }
                 }));
-            } else if (m = text.match(/^:|\+|\-|\*|\/|<=?|>=?|\[|\]|=/)) {
+            } else if (m = text.match(/^\(/)) {
+                result.push(Object.create(tproto['('], {
+                    pseudo: {
+                        value: this,
+                        writeable: false
+                    }
+                }));
+            } else if (m = text.match(/^\)/)) {
+                result.push(Object.create(tproto[')'], {
+                    pseudo: {
+                        value: this,
+                        writeable: false
+                    }
+                }));
+            } else if (m = text.match(/^\+|\*/)) {
                 result.push(Object.create(tproto[m[0]], {
                     pseudo: {
                         value: this,
