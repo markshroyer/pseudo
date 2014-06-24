@@ -48,10 +48,10 @@ var Pseudo = (function () {
             return t;
         };
 
-        infix('+', 10, function () {
+        infix('+', 100, function () {
             return this.first.evl() + this.second.evl();
         });
-        infix('*', 20, function () {
+        infix('*', 200, function () {
             return this.first.evl() * this.second.evl();
         });
 
@@ -62,7 +62,7 @@ var Pseudo = (function () {
         var pseudo = this;
 
         this.text = text;
-        this.env = env;
+        this.env = env || {};
     };
 
     Pseudo.prototype.tokenize = function () {
@@ -77,7 +77,7 @@ var Pseudo = (function () {
                 // Ignore non-indent whitespace
             } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
                 //result.push(new Token('name', m[0]));
-            } else if (m = text.match(/^[0-9]+/)) {
+            } else if (m = text.match(/^([0-9]*\.)?[0-9]+/)) {
                 result.push(Object.create(tproto['(literal)'], {
                     value: {
                         value: parseFloat(m[0]),
