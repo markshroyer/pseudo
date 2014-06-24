@@ -19,8 +19,11 @@ var Pseudo = (function () {
 
         var literal_proto = Object.create(token_proto);
         literal_proto.arity = 'unary';
-        literal_proto.nud = function (pseudo) {
+        literal_proto.nud = function () {
             return this;
+        };
+        literal_proto.evl = function () {
+            return this.value;
         };
         _p['(literal)'] = literal_proto;
 
@@ -30,25 +33,27 @@ var Pseudo = (function () {
 
         var infix_proto = Object.create(token_proto);
         infix_proto.arity = 'binary';
-        infix_proto.led = function (pseudo, left) {
+        infix_proto.led = function (left) {
             this.first = left;
-            this.second = pseudo.expression(this.lbp);
+            this.second = this.pseudo.expression(this.lbp);
             return this;
         };
 
-        var infix = function (id, bp, led) {
+        var infix = function (id, bp, evl) {
             var t = Object.create(infix_proto);
             t.id = id;
             t.lbp = bp;
-            if (led) {
-                t.led = led;
-            }
+            t.evl = evl;
             _p[id] = t;
             return t;
         };
 
-        infix('+', 10);
-        infix('*', 20);
+        infix('+', 10, function () {
+            return this.first.evl() + this.second.evl();
+        });
+        infix('*', 20, function () {
+            return this.first.evl() * this.second.evl();
+        });
 
         return _p;
     })();
@@ -77,10 +82,19 @@ var Pseudo = (function () {
                     value: {
                         value: parseFloat(m[0]),
                         writeable: false
+                    },
+                    pseudo: {
+                        value: this,
+                        writeable: false
                     }
                 }));
             } else if (m = text.match(/^:|\+|\-|\*|\/|<=?|>=?|\[|\]|=/)) {
-                result.push(Object.create(tproto[m[0]]));
+                result.push(Object.create(tproto[m[0]], {
+                    pseudo: {
+                        value: this,
+                        writeable: false
+                    }
+                }));
             } else {
                 console.log("Tokenization error: '" + text + "'");
                 return;
@@ -94,12 +108,12 @@ var Pseudo = (function () {
     Pseudo.prototype.expression = function (rbp) {
         var t = this.token;
         this.next();
-        var left = t.nud(this);
+        var left = t.nud();
 
         while (rbp < this.token.lbp) {
             t = this.token;
             this.next();
-            left = t.led(this, left);
+            left = t.led(left);
         }
         return left;
     };
@@ -112,6 +126,10 @@ var Pseudo = (function () {
         this.tokens = this.tokenize();
         this.next();
         return this.expression(0);
+    };
+
+    Pseudo.prototype.evl = function () {
+        return this.parse().evl();
     };
 
     return Pseudo;
