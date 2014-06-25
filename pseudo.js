@@ -90,15 +90,23 @@ var Pseudo = (function () {
         this.tproto = tproto;
     };
 
-    Pseudo.prototype.makeToken = function (id) {
+    Pseudo.prototype.addToken = function (id, props) {
         var t = Object.create(tproto[id]);
         t.pseudo = this;
-        return t;
+        for (var p in props) {
+            t[p] = props[p];
+        }
+        this.tokens.push(t);
     };
 
     Pseudo.prototype.tokenize = function () {
+        if (this.tokens) {
+            return;
+        }
+
+        this.tokens = [];
+
         var text = this.text;
-        var result = new Array();
         var m;
 
         while (text.length > 0) {
@@ -110,23 +118,22 @@ var Pseudo = (function () {
             //     //result.push(new Token('name', m[0]));
 
             if (m = text.match(/^([0-9]*\.)?[0-9]+/)) {
-                var t = this.makeToken('(literal)');
-                t.value = parseFloat(m[0]);
-                result.push(t);
+                this.addToken('(literal)', {
+                    value: parseFloat(m[0])
+                });
             } else if (m = text.match(/^\(/)) {
-                result.push(this.makeToken('('));
+                this.addToken('(');
             } else if (m = text.match(/^\)/)) {
-                result.push(this.makeToken(')'));
+                this.addToken(')');
             } else if (m = text.match(/^\+|\*/)) {
-                result.push(this.makeToken(m[0]));
+                this.addToken(m[0]);
             } else {
                 console.log("Tokenization error: '" + text + "'");
                 return;
             }
             text = text.substring(m[0].length);
         }
-        result.push(Object.create(tproto['(end)']));
-        return result;
+        this.addToken('(end)');
     };
 
     Pseudo.prototype.expression = function (rbp) {
@@ -155,15 +162,21 @@ var Pseudo = (function () {
     };
 
     Pseudo.prototype.parse = function () {
-        this.tokens = this.tokenize();
+        if (this.tree) {
+            return;
+        }
+
+        this.tokenize();
+        this.tree = {};
+
         this.next();
-        var parse = this.expression(0);
+        this.tree = this.expression(0);
         this.match('(end)');
-        return parse;
     };
 
     Pseudo.prototype.evl = function () {
-        return this.parse().evl();
+        this.parse();
+        return this.tree.evl();
     };
 
     return Pseudo;
