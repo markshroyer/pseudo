@@ -117,7 +117,7 @@ var Pseudo = (function () {
             // } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
             //     //result.push(new Token('name', m[0]));
 
-            if (m = text.match(/^([0-9]*\.)?[0-9]+/)) {
+            if (m = text.match(/^([0-9]*\.)?[0-9]+|\.[0-9]+/)) {
                 this.addToken('(literal)', {
                     value: parseFloat(m[0])
                 });
