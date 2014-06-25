@@ -90,6 +90,12 @@ var Pseudo = (function () {
         this.tproto = tproto;
     };
 
+    Pseudo.prototype.makeToken = function (id) {
+        var t = Object.create(tproto[id]);
+        t.pseudo = this;
+        return t;
+    };
+
     Pseudo.prototype.tokenize = function () {
         var text = this.text;
         var result = new Array();
@@ -104,37 +110,15 @@ var Pseudo = (function () {
             //     //result.push(new Token('name', m[0]));
 
             if (m = text.match(/^([0-9]*\.)?[0-9]+/)) {
-                result.push(Object.create(tproto['(literal)'], {
-                    value: {
-                        value: parseFloat(m[0]),
-                        writeable: false
-                    },
-                    pseudo: {
-                        value: this,
-                        writeable: false
-                    }
-                }));
+                var t = this.makeToken('(literal)');
+                t.value = parseFloat(m[0]);
+                result.push(t);
             } else if (m = text.match(/^\(/)) {
-                result.push(Object.create(tproto['('], {
-                    pseudo: {
-                        value: this,
-                        writeable: false
-                    }
-                }));
+                result.push(this.makeToken('('));
             } else if (m = text.match(/^\)/)) {
-                result.push(Object.create(tproto[')'], {
-                    pseudo: {
-                        value: this,
-                        writeable: false
-                    }
-                }));
+                result.push(this.makeToken(')'));
             } else if (m = text.match(/^\+|\*/)) {
-                result.push(Object.create(tproto[m[0]], {
-                    pseudo: {
-                        value: this,
-                        writeable: false
-                    }
-                }));
+                result.push(this.makeToken(m[0]));
             } else {
                 console.log("Tokenization error: '" + text + "'");
                 return;
