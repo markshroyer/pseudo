@@ -65,7 +65,7 @@ var Pseudo = (function () {
         lparenp.lbp = 0;
         lparenp.nud = function () {
             var expr = this.pseudo.expression(0);
-            this.pseudo.match(rparenp);
+            this.pseudo.match(')');
             return expr;
         };
         _p['('] = lparenp;
@@ -163,8 +163,8 @@ var Pseudo = (function () {
     };
 
     Pseudo.prototype.match = function (t) {
-        if (!t.isPrototypeOf(this.token)) {
-            throw "Expected: " + t.repr();
+        if (!tproto[t].isPrototypeOf(this.token)) {
+            throw "Expected: " + t;
         } else {
             this.next();
         }
@@ -174,7 +174,7 @@ var Pseudo = (function () {
         this.tokens = this.tokenize();
         this.next();
         var parse = this.expression(0);
-        this.match(tproto['(end)']);
+        this.match('(end)');
         return parse;
     };
 
