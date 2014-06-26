@@ -60,6 +60,32 @@ var Pseudo = (function () {
         token('(endblock)', { lbp: 1 });
         token('(nl)', { lbp: 2 });
 
+        var constantp = Object.create(tokenp);
+        constantp.nud = function () {
+            return this;
+        };
+        constantp.evl = function () {
+            return this.value;
+        };
+        token('(constant)', constantp);
+
+        var constant = function (id, value) {
+            var c = Object.create(constantp);
+            c.value = value;
+            token(id, c);
+        };
+
+        token('(name)', {
+            nud: function () {
+                return this;
+            },
+            evl: function () {
+                return this.pseudo.scope.load(this.id);
+            }
+        });
+
+        constant('nil', null);
+
         var literalp = Object.create(tokenp);
         literalp.arity = 'unary';
         literalp.nud = function () {
@@ -81,11 +107,22 @@ var Pseudo = (function () {
         };
         var infix = function (id, bp, evl) {
             var t = Object.create(infixp);
-            t.id = id;
             t.lbp = bp;
             t.evl = evl;
-            _p[id] = t;
-            return t;
+            token(id, t);
+        };
+
+        var infixrp = Object.create(infixp);
+        infixrp.led = function (left) {
+            this.first = left;
+            this.second = this.pseudo.expression(this.lbp-1);
+            return this;
+        };
+        var infixr = function (id, bp, evl) {
+            var t = Object.create(infixrp);
+            t.lbp = bp;
+            t.evl = evl;
+            token(id, t);
         };
 
         token(')', { lbp: 10 });
@@ -105,14 +142,54 @@ var Pseudo = (function () {
             return this.first.evl() * this.second.evl();
         });
 
+        infixr('=', 10, function () {
+            var v = this.second.evl();
+            this.pseudo.scope.store(this.first.id, v);
+            return v;
+        });
+
         return _p;
     })();
+
+    var makeScope = function (parent) {
+        var s = Object.create({
+            findScope: function (name) {
+                if (name in this.bindings) {
+                    return this;
+                } else if (this.parent) {
+                    return this.parent.findScope(name);
+                } else {
+                    return null;
+                }
+            },
+            load: function (name) {
+                var scope = this.findScope(name);
+                if (scope) {
+                    return scope.bindings[name];
+                } else {
+                    return undefined;
+                }
+            },
+            store: function (name, value) {
+                var scope = this.findScope(name);
+                if (scope) {
+                    scope.bindings[name] = value;
+                } else {
+                    this.bindings[name] = value;
+                }
+            }
+        });
+        s.bindings = {};
+        s.parent = parent || null;
+        return s;
+    };
 
     var Pseudo = function (text, env) {
         var pseudo = this;
 
         this.text = text;
         this.env = env || {};
+        this.scope = makeScope();
 
         // For debugging purposes
         this.tproto = tproto;
@@ -156,7 +233,7 @@ var Pseudo = (function () {
                 }
             } else if (m = text.match(/^\ +/)) {
                 // Ignore non-indenting whitespace
-            } else if (m = text.match(/^([0-9]*\.)?[0-9]+|\.[0-9]+/)) {
+            } else if (m = text.match(/^(?:([0-9]*\.)?[0-9]+|\.[0-9]+)/)) {
                 this.addToken('(literal)', {
                     value: parseFloat(m[0])
                 });
@@ -164,8 +241,10 @@ var Pseudo = (function () {
                 this.addToken('(');
             } else if (m = text.match(/^\)/)) {
                 this.addToken(')');
-            } else if (m = text.match(/^\+|\*/)) {
+            } else if (m = text.match(/^(?:\+|\*|=)/)) {
                 this.addToken(m[0]);
+            } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
+                this.addToken('(name)', { id : m[0] });
             } else {
                 throw "Tokenization error: " + text;
             }
@@ -237,4 +316,4 @@ var env = {};
 
 //var p = new Pseudo('2+3*4', env);
 
-var p = new Pseudo('1+2\n3*4');
+var p = new Pseudo('a=2+3\na*4');
