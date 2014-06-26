@@ -25,14 +25,40 @@ var Pseudo = (function () {
         _p['(token)'] = tokenp;
 
         var token = function (id, p) {
-            p = p || Object.create(tokenp);
+            if (!tokenp.isPrototypeOf(p)) {
+                var props = p;
+                p = Object.create(tokenp);
+                for (var k in props) {
+                    p[k] = props[k];
+                }
+            }
             p.id = id;
             _p[id] = p;
         };
 
-        token('(indent)');
-        token('(dedent)');
-        token('(nl)');
+        var blockp = Object.create(tokenp);
+        blockp.nud = function () {
+            this.subexprs = [];
+            while (!this.pseudo.testMatch('(endblock)')) {
+                this.subexprs.push(this.pseudo.expression(2));
+                if (this.pseudo.testMatch('(nl)')) {
+                    this.pseudo.next();
+                }
+            }
+            this.pseudo.match('(endblock)');
+            return this;
+        };
+        blockp.evl = function () {
+            var result = null;
+            for (var i = 0; i < this.subexprs.length; ++i) {
+                result = this.subexprs[i].evl();
+            }
+            return result;
+        };
+        token('(block)', blockp);
+
+        token('(endblock)', { lbp: 1 });
+        token('(nl)', { lbp: 2 });
 
         var literalp = Object.create(tokenp);
         literalp.arity = 'unary';
@@ -44,9 +70,7 @@ var Pseudo = (function () {
         };
         token('(literal)', literalp);
 
-        var endp = Object.create(tokenp);
-        endp.lbp = 0;
-        token('(end)', endp);
+        token('(end)', { lbp: 0 });
 
         var infixp = Object.create(tokenp);
         infixp.arity = 'binary';
@@ -113,26 +137,21 @@ var Pseudo = (function () {
 
         this.tokens = [];
 
-        var text = this.text;
-        var dents = [0];
+        var text = '\n' + this.text;
+        var dents = [-1];
         var m;
 
         while (text.length > 0) {
             if (m = text.match(/^\n(\ *)/)) {
                 var indent = m[1].length;
-
                 if (indent == dents[dents.length-1]) {
                     this.addToken('(nl)');
                 } else if (indent > dents[dents.length-1]) {
                     dents.push(indent);
-                    this.addToken('(indent)', {
-                        indent: indent
-                    });
+                    this.addToken('(block)', { indent: indent });
                 } else {
                     while (indent < dents[dents.length-1]) {
-                        this.addToken('(dedent)', {
-                            indent: dents.pop()
-                        });
+                        this.addToken('(endblock)', { indent: dents.pop() });
                     }
                     if (indent != dents[dents.length-1]) {
                         throw "Illegal indentation";
@@ -155,6 +174,7 @@ var Pseudo = (function () {
             }
             text = text.substring(m[0].length);
         }
+        this.addToken('(endblock)', { indent: 0 });
         this.addToken('(end)');
     };
 
@@ -175,11 +195,15 @@ var Pseudo = (function () {
         this.token = this.tokens.shift();
     };
 
+    Pseudo.prototype.testMatch = function (t) {
+        return tproto[t].isPrototypeOf(this.token);
+    };
+
     Pseudo.prototype.match = function (t) {
-        if (!tproto[t].isPrototypeOf(this.token)) {
-            throw "Expected: " + t;
-        } else {
+        if (tproto[t].isPrototypeOf(this.token)) {
             this.next();
+        } else {
+            throw "Expected: " + t;
         }
     };
 
@@ -214,4 +238,6 @@ var text = ''
 
 var env = {};
 
-var p = new Pseudo('2+3*4', env);
+//var p = new Pseudo('2+3*4', env);
+
+var p = new Pseudo('1+2\n3*4');
