@@ -88,18 +88,15 @@ var Pseudo = (function () {
             return t;
         };
 
-        var rparenp = Object.create(tokenp);
-        rparenp.lbp = 0;
-        token(')', rparenp);
-
-        var lparenp = Object.create(tokenp);
-        lparenp.lbp = 0;
-        lparenp.nud = function () {
-            var expr = this.pseudo.expression(0);
-            this.pseudo.match(')');
-            return expr;
-        };
-        token('(', lparenp);
+        token(')', { lbp: 10 });
+        token('(', {
+            lbp: 10,
+            nud: function () {
+                var expr = this.pseudo.expression(this.lbp);
+                this.pseudo.match(')');
+                return expr;
+            }
+        });
 
         infix('+', 100, function () {
             return this.first.evl() + this.second.evl();
