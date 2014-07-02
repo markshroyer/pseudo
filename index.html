@@ -5,17 +5,12 @@
     <title>Pseudo</title>
     <script src="pseudo.js"></script>
     <script type="text/javascript">
-      var text = ''
-      + '\n\n\n'
-      + 'a=1\n'
-      + 'b = 2\n'
-      + 'if a == 1:\n'
-      + '  \n'
-      + '    b = 3\n'
-      + '    \n'
-      + 'b\n'
-      + '\n'
-      + '';
+      var text =
+          'a = 1\n' +
+          'if a == 2:\n' +
+          '    100\n' +
+          'else:\n' +
+          '    101\n';
 
       var env = {};
       var p = Pseudo.create(text);

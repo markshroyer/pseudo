@@ -106,18 +106,29 @@ var Pseudo = (function () {
                 this.test = this.pseudo.expression(this.lbp);
                 this.pseudo.match(':');
                 this.block = this.pseudo.expression(this.lbp);
+                if (this.pseudo.testMatch('else')) {
+                    this.pseudo.next();
+                    this.pseudo.match(':');
+                    this.elseblock = this.pseudo.expression(this.lbp);
+                }
                 return this;
             },
             evl: function () {
                 if (this.test.evl() === true) {
                     return this.block.evl();
                 } else if (this.test.evl() === false) {
-                    return null;
+                    if ('elseblock' in this) {
+                        return this.elseblock.evl();
+                    } else {
+                        return null;
+                    }
                 } else {
                     throw "Expected boolean value in test";
                 }
             }
         });
+
+        token('else', { lbp: 1 });
 
         var infixp = Object.create(tokenp);
         infixp.arity = 'binary';

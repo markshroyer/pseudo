@@ -53,3 +53,14 @@ QUnit.test("If statement value", function (assert) {
     assert.equal(p.evl(), 42, "If statement should evaluate to its body " +
                 "if the condition is true");
 });
+
+QUnit.test("If else block", function (assert) {
+    var text =
+        'a = 1\n' +
+        'if a == 2:\n' +
+        '    100\n' +
+        'else:\n' +
+        '    101\n';
+    var p = Pseudo.create(text);
+    assert.equal(p.evl(), 101, "Else should be evaluated iff the condition is false");
+});
