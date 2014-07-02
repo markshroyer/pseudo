@@ -256,7 +256,7 @@ var Pseudo = (function () {
                         throw "Illegal indentation";
                     }
                 }
-            } else if (m = text.match(/^\n/)) {
+            } else if (m = text.match(/^\n\ */)) {
                 // Ignore empty lines
             } else if (m = text.match(/^\ +/)) {
                 // Ignore non-indenting whitespace
@@ -341,8 +341,9 @@ var text = ''
 + 'a=1\n'
 + 'b = 2\n'
 + 'if a == 1:\n'
-+ '\n'
++ '  \n'
 + '    b = 3\n'
++ '    \n'
 + 'b\n'
 + '\n'
 + '';
