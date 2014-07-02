@@ -2,7 +2,7 @@
     "name": "pseudo",
     "version": "0.0.1",
     "dependencies": {
-        "qunit": "~1.14.0"
+        "qunit": "~1.14"
     },
     "private": true
 }
