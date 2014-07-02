@@ -15,6 +15,11 @@ QUnit.test("Addition/multiplication operator precedence", function (assert) {
     assert.equal(p.evl(), 19, "2 + 3 * 4 + 5 == 19");
 });
 
+QUnit.test("Parentheses", function (assert) {
+    var p = Pseudo.create("(2 + 3) * 4 + 5");
+    assert.equal(p.evl(), 25, "(2 + 3) * 4 + 5 == 25");
+});
+
 
 QUnit.module("Assignment");
 
