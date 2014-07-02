@@ -209,129 +209,130 @@ var Pseudo = (function () {
         return s;
     };
 
-    var Pseudo = function (text, env) {
-        var pseudo = this;
+    var pseudop = {
+        tproto: tproto,
 
-        this.text = text;
-        this.env = env || {};
-        this.scope = makeScope();
-
-        // For debugging purposes
-        this.tproto = tproto;
-    };
-
-    Pseudo.prototype.addToken = function (id, props) {
-        var t = Object.create(tproto[id]);
-        t.pseudo = this;
-        for (var p in props) {
-            t[p] = props[p];
-        }
-        this.tokens.push(t);
-    };
-
-    Pseudo.prototype.tokenize = function () {
-        if (this.tokens) {
-            return;
-        }
-
-        this.tokens = [];
-
-        var text = '\n' + this.text;
-        var dents = [-1];
-        var m;
-
-        while (text.length > 0) {
-            if (m = text.match(/^\n(\ *)(?=[^\ \t\n])/)) {
-                var indent = m[1].length;
-                if (indent == dents[dents.length-1]) {
-                    this.addToken('(nl)');
-                } else if (indent > dents[dents.length-1]) {
-                    dents.push(indent);
-                    this.addToken('(block)', { indent: indent });
-                } else {
-                    while (indent < dents[dents.length-1]) {
-                        this.addToken('(endblock)', { indent: dents.pop() });
-                    }
-                    if (indent != dents[dents.length-1]) {
-                        throw "Illegal indentation";
-                    }
-                }
-            } else if (m = text.match(/^\n\ */)) {
-                // Ignore empty lines
-            } else if (m = text.match(/^\ +/)) {
-                // Ignore non-indenting whitespace
-            } else if (m = text.match(/^(?:([0-9]*\.)?[0-9]+|\.[0-9]+)/)) {
-                this.addToken('(literal)', {
-                    value: parseFloat(m[0])
-                });
-            } else if (m = text.match(/^\(/)) {
-                this.addToken('(');
-            } else if (m = text.match(/^\)/)) {
-                this.addToken(')');
-            } else if (m = text.match(/^(?:\+|\*|==?|:)/)) {
-                this.addToken(m[0]);
-            } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
-                if (m[0] in tproto) {
-                    this.addToken(m[0])
-                } else {
-                    this.addToken('(name)', { id : m[0] });
-                }
-            } else {
-                throw "Tokenization error: " + text;
+        addToken: function (id, props) {
+            var t = Object.create(tproto[id]);
+            t.pseudo = this;
+            for (var p in props) {
+                t[p] = props[p];
             }
-            text = text.substring(m[0].length);
-        }
-        this.addToken('(endblock)', { indent: 0 });
-        this.addToken('(end)');
-    };
+            this.tokens.push(t);
+        },
 
-    Pseudo.prototype.expression = function (rbp) {
-        var t = this.token;
-        this.next();
-        var left = t.nud();
+        tokenize: function () {
+            if (this.tokens) {
+                return;
+            }
 
-        while (rbp < this.token.lbp) {
-            t = this.token;
+            this.tokens = [];
+
+            var text = '\n' + this.text;
+            var dents = [-1];
+            var m;
+
+            while (text.length > 0) {
+                if (m = text.match(/^\n(\ *)(?=[^\ \t\n])/)) {
+                    var indent = m[1].length;
+                    if (indent == dents[dents.length-1]) {
+                        this.addToken('(nl)');
+                    } else if (indent > dents[dents.length-1]) {
+                        dents.push(indent);
+                        this.addToken('(block)', { indent: indent });
+                    } else {
+                        while (indent < dents[dents.length-1]) {
+                            this.addToken('(endblock)', { indent: dents.pop() });
+                        }
+                        if (indent != dents[dents.length-1]) {
+                            throw "Illegal indentation";
+                        }
+                    }
+                } else if (m = text.match(/^\n\ */)) {
+                    // Ignore empty lines
+                } else if (m = text.match(/^\ +/)) {
+                    // Ignore non-indenting whitespace
+                } else if (m = text.match(/^(?:([0-9]*\.)?[0-9]+|\.[0-9]+)/)) {
+                    this.addToken('(literal)', {
+                        value: parseFloat(m[0])
+                    });
+                } else if (m = text.match(/^\(/)) {
+                    this.addToken('(');
+                } else if (m = text.match(/^\)/)) {
+                    this.addToken(')');
+                } else if (m = text.match(/^(?:\+|\*|==?|:)/)) {
+                    this.addToken(m[0]);
+                } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
+                    if (m[0] in tproto) {
+                        this.addToken(m[0])
+                    } else {
+                        this.addToken('(name)', { id : m[0] });
+                    }
+                } else {
+                    throw "Tokenization error: " + text;
+                }
+                text = text.substring(m[0].length);
+            }
+            this.addToken('(endblock)', { indent: 0 });
+            this.addToken('(end)');
+        },
+
+        expression: function (rbp) {
+            var t = this.token;
             this.next();
-            left = t.led(left);
-        }
-        return left;
-    };
+            var left = t.nud();
 
-    Pseudo.prototype.next = function () {
-        this.token = this.tokens.shift();
-    };
+            while (rbp < this.token.lbp) {
+                t = this.token;
+                this.next();
+                left = t.led(left);
+            }
+            return left;
+        },
 
-    Pseudo.prototype.testMatch = function (t) {
-        return tproto[t].isPrototypeOf(this.token);
-    };
+        next: function () {
+            this.token = this.tokens.shift();
+        },
 
-    Pseudo.prototype.match = function (t) {
-        if (tproto[t].isPrototypeOf(this.token)) {
+        testMatch: function (t) {
+            return tproto[t].isPrototypeOf(this.token);
+        },
+
+        match: function (t) {
+            if (tproto[t].isPrototypeOf(this.token)) {
+                this.next();
+            } else {
+                throw "Expected: " + t;
+            }
+        },
+
+        parse: function () {
+            if (this.tree) {
+                return;
+            }
+
+            this.tokenize();
+            this.tree = {};
+
             this.next();
-        } else {
-            throw "Expected: " + t;
+            this.tree = this.expression(0);
+            this.match('(end)');
+        },
+
+        evl: function () {
+            this.parse();
+            return this.tree.evl();
         }
     };
 
-    Pseudo.prototype.parse = function () {
-        if (this.tree) {
-            return;
-        }
-
-        this.tokenize();
-        this.tree = {};
-
-        this.next();
-        this.tree = this.expression(0);
-        this.match('(end)');
+    var pseudo_create = function (text, env) {
+        var pseudo = Object.create(pseudop);
+        pseudo.text = text;
+        pseudo.env = env || {};
+        pseudo.scope = makeScope();
+        return pseudo;
     };
 
-    Pseudo.prototype.evl = function () {
-        this.parse();
-        return this.tree.evl();
-    };
-
-    return Pseudo;
+    return { create: pseudo_create };
 
 })();
