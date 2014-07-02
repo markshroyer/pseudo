@@ -135,11 +135,15 @@ var Pseudo = (function () {
             }
         });
 
-        infix('+', 100, function () {
+        infix('+', 1000, function () {
             return this.first.evl() + this.second.evl();
         });
-        infix('*', 200, function () {
+        infix('*', 2000, function () {
             return this.first.evl() * this.second.evl();
+        });
+
+        infix('==', 100, function () {
+            return this.first.evl() === this.second.evl();
         });
 
         infixr('=', 10, function () {
@@ -241,10 +245,14 @@ var Pseudo = (function () {
                 this.addToken('(');
             } else if (m = text.match(/^\)/)) {
                 this.addToken(')');
-            } else if (m = text.match(/^(?:\+|\*|=)/)) {
+            } else if (m = text.match(/^(?:\+|\*|==?)/)) {
                 this.addToken(m[0]);
             } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
-                this.addToken('(name)', { id : m[0] });
+                if (m[0] in tproto) {
+                    this.addToken(m[0])
+                } else {
+                    this.addToken('(name)', { id : m[0] });
+                }
             } else {
                 throw "Tokenization error: " + text;
             }
@@ -316,4 +324,4 @@ var env = {};
 
 //var p = new Pseudo('2+3*4', env);
 
-var p = new Pseudo('a=2+3\na*4');
+var p = new Pseudo('a=2+3\na*4==21');
