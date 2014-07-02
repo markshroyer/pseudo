@@ -273,7 +273,9 @@ var Pseudo = (function () {
                 }
                 text = text.substring(m[0].length);
             }
-            this.addToken('(endblock)', { indent: 0 });
+            while (dents.length > 1) {
+                this.addToken('(endblock)', { indent: dents.pop() });
+            }
             this.addToken('(end)');
         },
 
