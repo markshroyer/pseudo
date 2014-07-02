@@ -335,21 +335,3 @@ var Pseudo = (function () {
     return Pseudo;
 
 })();
-
-var text = ''
-+ '\n\n\n'
-+ 'a=1\n'
-+ 'b = 2\n'
-+ 'if a == 1:\n'
-+ '  \n'
-+ '    b = 3\n'
-+ '    \n'
-+ 'b\n'
-+ '\n'
-+ '';
-
-var env = {};
-
-//var p = new Pseudo('2+3*4', env);
-
-var p = new Pseudo(text);
