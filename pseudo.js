@@ -241,7 +241,7 @@ var Pseudo = (function () {
         var m;
 
         while (text.length > 0) {
-            if (m = text.match(/^\n(\ *)/)) {
+            if (m = text.match(/^\n(\ *)(?=[^\ \t\n])/)) {
                 var indent = m[1].length;
                 if (indent == dents[dents.length-1]) {
                     this.addToken('(nl)');
@@ -256,6 +256,8 @@ var Pseudo = (function () {
                         throw "Illegal indentation";
                     }
                 }
+            } else if (m = text.match(/^\n/)) {
+                // Ignore empty lines
             } else if (m = text.match(/^\ +/)) {
                 // Ignore non-indenting whitespace
             } else if (m = text.match(/^(?:([0-9]*\.)?[0-9]+|\.[0-9]+)/)) {
@@ -335,11 +337,14 @@ var Pseudo = (function () {
 })();
 
 var text = ''
++ '\n\n\n'
 + 'a=1\n'
 + 'b = 2\n'
 + 'if a == 1:\n'
++ '\n'
 + '    b = 3\n'
 + 'b\n'
++ '\n'
 + '';
 
 var env = {};
