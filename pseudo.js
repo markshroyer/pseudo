@@ -98,6 +98,27 @@ var Pseudo = (function () {
 
         token('(end)', { lbp: 0 });
 
+        token(':', { lbp: 1 });
+
+        token('if', {
+            lbp: 1,
+            nud: function () {
+                this.test = this.pseudo.expression(this.lbp);
+                this.pseudo.match(':');
+                this.block = this.pseudo.expression(this.lbp);
+                return this;
+            },
+            evl: function () {
+                if (this.test.evl() === true) {
+                    return this.block.evl();
+                } else if (this.test.evl() === false) {
+                    return null;
+                } else {
+                    throw "Expected boolean value in test";
+                }
+            }
+        });
+
         var infixp = Object.create(tokenp);
         infixp.arity = 'binary';
         infixp.led = function (left) {
@@ -245,7 +266,7 @@ var Pseudo = (function () {
                 this.addToken('(');
             } else if (m = text.match(/^\)/)) {
                 this.addToken(')');
-            } else if (m = text.match(/^(?:\+|\*|==?)/)) {
+            } else if (m = text.match(/^(?:\+|\*|==?|:)/)) {
                 this.addToken(m[0]);
             } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
                 if (m[0] in tproto) {
@@ -314,14 +335,15 @@ var Pseudo = (function () {
 })();
 
 var text = ''
-+ '\n'
-+ 'while i < 3:\n'
-+ '    data[i] = 0\n'
-+ '\n'
++ 'a=1\n'
++ 'b = 2\n'
++ 'if a == 1:\n'
++ '    b = 3\n'
++ 'b\n'
 + '';
 
 var env = {};
 
 //var p = new Pseudo('2+3*4', env);
 
-var p = new Pseudo('a=2+3\na*4==21');
+var p = new Pseudo(text);
