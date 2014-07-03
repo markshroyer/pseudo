@@ -335,6 +335,10 @@ var Pseudo = (function () {
         evl: function () {
             this.parse();
             return this.tree.evl();
+        },
+
+        global: function (name) {
+            return this.scope.bindings[name];
         }
     };
 
