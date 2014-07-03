@@ -84,3 +84,16 @@ QUnit.test("If else block", function (assert) {
     var p = Pseudo.create(text);
     assert.equal(p.evl(), 101, "Else should be evaluated iff the condition is false");
 });
+
+QUnit.test("While loop", function (assert) {
+    var text = ml(
+        'i = 1',
+        'result = 1',
+        'while i != 7:',
+        '    result = result * i',
+        '    i = i + 1',
+        'result'
+    );
+    var p = Pseudo.create(text);
+    assert.equal(p.evl(), 720, "Factorial computation with while loop");
+});

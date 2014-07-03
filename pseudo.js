@@ -130,6 +130,23 @@ var Pseudo = (function () {
 
         token('else', { lbp: 1 });
 
+        token('while', {
+            lbp: 1,
+            nud: function () {
+                this.test = this.pseudo.expression(this.lbp);
+                this.pseudo.match(':');
+                this.block = this.pseudo.expression(this.lbp);
+                return this;
+            },
+            evl: function () {
+                var block_eval = null;
+                while (this.test.evl() === true) {
+                    block_eval = this.block.evl();
+                };
+                return block_eval;
+            }
+        });
+
         var infixp = Object.create(tokenp);
         infixp.arity = 'binary';
         infixp.led = function (left) {
@@ -176,6 +193,10 @@ var Pseudo = (function () {
 
         infix('==', 100, function () {
             return this.first.evl() === this.second.evl();
+        });
+
+        infix('!=', 100, function () {
+            return this.first.evl() !== this.second.evl();
         });
 
         infixr('=', 10, function () {
@@ -271,7 +292,7 @@ var Pseudo = (function () {
                     this.addToken('(');
                 } else if (m = text.match(/^\)/)) {
                     this.addToken(')');
-                } else if (m = text.match(/^(?:\+|\*|==?|:)/)) {
+                } else if (m = text.match(/^(?:\+|\*|==?|\!=|:)/)) {
                     this.addToken(m[0]);
                 } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
                     if (m[0] in tproto) {
