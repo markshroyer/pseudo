@@ -11,6 +11,20 @@ function ml() {
 };
 
 
+QUnit.module("Lexical analysis");
+
+QUnit.test("Indentation", function (assert) {
+    assert.throws(function () {
+        Pseudo.create(ml(
+            'a = 1',
+            'if a == 1:',
+            '    b = 2',
+            '  b = 3'
+        )).evl();
+    }, "Invalid indentation");
+});
+
+
 QUnit.module("Arithmetic operators");
 
 QUnit.test("Simple addition", function (assert) {
@@ -29,8 +43,12 @@ QUnit.test("Addition/multiplication operator precedence", function (assert) {
 });
 
 QUnit.test("Parentheses", function (assert) {
-    var p = Pseudo.create("(2 + 3) * 4 + 5");
-    assert.equal(p.evl(), 25, "(2 + 3) * 4 + 5 == 25");
+    assert.equal(Pseudo.create("(2+3)*4 + 5").evl(), 25,
+                 "(2 + 3) * 4 + 5 == 25");
+    assert.throws(function () { Pseudo.create("(2+3").evl() },
+                  "Unbalanced opening parens");
+    assert.throws(function () { Pseudo.create("2+3)").evl() },
+                  "Unbalanced closing parens");
 });
 
 
