@@ -11,7 +11,7 @@ function ml() {
 };
 
 
-QUnit.module("Lexical analysis");
+QUnit.module("Syntax");
 
 QUnit.test("Indentation", function (assert) {
     assert.throws(function () {
@@ -22,6 +22,14 @@ QUnit.test("Indentation", function (assert) {
             '  b = 3'
         )).evl();
     }, "Invalid indentation");
+
+    assert.throws(function () {
+        Pseudo.create(ml(
+            'a = 1',
+            'b = 2',
+            '    c = 3'
+        )).evl();
+    }, "Invalid indentation (bare block)");
 });
 
 

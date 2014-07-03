@@ -36,26 +36,15 @@ var Pseudo = (function () {
             _p[id] = p;
         };
 
-        var blockp = Object.create(tokenp);
-        blockp.nud = function () {
-            this.subexprs = [];
-            while (!this.pseudo.testMatch('(endblock)')) {
-                this.subexprs.push(this.pseudo.expression(2));
-                if (this.pseudo.testMatch('(nl)')) {
-                    this.pseudo.next();
+        token('(block)', {
+            evl: function () {
+                var result = null;
+                for (var i = 0; i < this.subexprs.length; ++i) {
+                    result = this.subexprs[i].evl();
                 }
+                return result;
             }
-            this.pseudo.match('(endblock)');
-            return this;
-        };
-        blockp.evl = function () {
-            var result = null;
-            for (var i = 0; i < this.subexprs.length; ++i) {
-                result = this.subexprs[i].evl();
-            }
-            return result;
-        };
-        token('(block)', blockp);
+        });
 
         token('(endblock)', { lbp: 1 });
         token('(nl)', { lbp: 2 });
@@ -105,11 +94,11 @@ var Pseudo = (function () {
             nud: function () {
                 this.test = this.pseudo.expression(this.lbp);
                 this.pseudo.match(':');
-                this.block = this.pseudo.expression(this.lbp);
+                this.block = this.pseudo.parseBlock();
                 if (this.pseudo.testMatch('else')) {
                     this.pseudo.next();
                     this.pseudo.match(':');
-                    this.elseblock = this.pseudo.expression(this.lbp);
+                    this.elseblock = this.pseudo.parseBlock();
                 }
                 return this;
             },
@@ -135,7 +124,7 @@ var Pseudo = (function () {
             nud: function () {
                 this.test = this.pseudo.expression(this.lbp);
                 this.pseudo.match(':');
-                this.block = this.pseudo.expression(this.lbp);
+                this.block = this.pseudo.parseBlock();
                 return this;
             },
             evl: function () {
@@ -340,6 +329,21 @@ var Pseudo = (function () {
             }
         },
 
+        parseBlock: function () {
+            var block = this.token;
+            this.match('(block)');
+
+            block.subexprs = [];
+            while (!this.testMatch('(endblock)')) {
+                block.subexprs.push(this.expression(2));
+                if (this.testMatch('(nl)')) {
+                    this.next();
+                }
+            }
+            this.match('(endblock)');
+            return block;
+        },
+
         parse: function () {
             if (this.tree) {
                 return;
@@ -349,7 +353,7 @@ var Pseudo = (function () {
             this.tree = {};
 
             this.next();
-            this.tree = this.expression(0);
+            this.tree = this.parseBlock();
             this.match('(end)');
         },
 
