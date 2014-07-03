@@ -70,6 +70,12 @@ QUnit.test("Simple assignment", function (assert) {
     assert.equal(p.evl(), 1);
 });
 
+QUnit.test("Error handling", function (assert) {
+    assert.throws(function () {
+        Pseudo.create('if = 5').parse();
+    }, "Cannot assign to a keyword");
+});
+
 
 QUnit.module("Control");
 
