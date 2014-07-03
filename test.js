@@ -1,3 +1,16 @@
+// Shorthand for multi-line string "literals"
+function ml() {
+    var result = "";
+    for (var i = 0; i < arguments.length; i++) {
+        result += arguments[i];
+        if (i < arguments.length - 1) {
+            result += "\n";
+        }
+    }
+    return result;
+};
+
+
 QUnit.module("Arithmetic operators");
 
 QUnit.test("Simple addition", function (assert) {
@@ -35,17 +48,19 @@ QUnit.test("Simple assignment", function (assert) {
 QUnit.module("Control");
 
 QUnit.test("If statement", function (assert) {
-    var text =
-        'a = 1\n' +
-        'b = 2\n' +
-        'if a == 1:\n' +
-        '    b = 3\n' +
-        'if a == 2:\n' +
-        '    b = 4\n' +
-        '\n' +
-        'b\n';
+    var text = ml(
+        'a = 1',
+        'b=2',
+        'if a == 1:',
+        '    b = 3',
+        'if a == 2:',
+        '    b = 4',
+        '',
+        'b'
+    );
     var p = Pseudo.create(text);
     assert.equal(p.evl(), 3, "Body should be evaluated iff the condition is true");
+    assert.equal(p.global('b'), 3);
 });
 
 QUnit.test("If statement value", function (assert) {
