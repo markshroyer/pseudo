@@ -129,3 +129,32 @@ QUnit.test("While loop", function (assert) {
     var p = Pseudo.create(text);
     assert.equal(p.evl(), 720, "Factorial computation with while loop");
 });
+
+
+QUnit.module("Functions");
+
+QUnit.test("Function definition and invocation", function (assert) {
+    assert.equal(Pseudo.create(ml(
+        'def times_two(n):',
+        '    n * 2',
+        '',
+        'times_two(3)'
+    )).evl(), 6, "Simple function application");
+
+    assert.equal(Pseudo.create(ml(
+        'def sum_of_three(a, b, c):',
+        '    a + b + c',
+        '',
+        'sum_of_three(3, 4, 5)'
+    )).evl(), 12, "Function with multiple arguments");
+
+    assert.equal(Pseudo.create(ml(
+        'def factorial(n):',
+        '    if n == 0:',
+        '        1',
+        '    else:',
+        '        n * factorial(n-1)',
+        '',
+        'factorial(6)'
+    )).evl(), 720, "Recursive factorial");
+});

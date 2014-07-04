@@ -2,6 +2,18 @@
 var Pseudo = (function () {
     "use strict";
 
+    var lambdap = {
+        evl: function (args) {
+        }
+    };
+
+    var makeLambda = function (bindings, block) {
+        var l = Object.create(lambdap);
+        l.bindings = bindings;
+        l.block = block;
+        return l;
+    };
+
     // Builds the dictionary of token prototypes used by the parser.  Scope
     // resolution of name tokens is left for runtime.
     var tproto = (function () {
@@ -30,7 +42,7 @@ var Pseudo = (function () {
                 p = Object.create(tokenp);
                 for (var k in props) {
                     p[k] = props[k];
-                }
+                 }
             }
             p.id = id;
             _p[id] = p;
@@ -136,6 +148,22 @@ var Pseudo = (function () {
             }
         });
 
+        token('def', {
+            nud: function () {
+                // TODO Ensure proto's lambdaexpr and bindings are just
+                // names, throw error otherwise
+                this.proto = this.pseudo.expression(1);
+                this.pseudo.match(':');
+                this.block = this.pseudo.parseBlock();
+                return this;
+            },
+            evl: function () {
+                var l = makeLambda(this.proto.bindings, this.block);
+                this.pseudo.scope.store(this.proto.lambdaexpr.id, l);
+                return l;
+            }
+        });
+
         var infixp = Object.create(tokenp);
         infixp.arity = 'binary';
         infixp.led = function (left) {
@@ -170,11 +198,42 @@ var Pseudo = (function () {
                 var expr = this.pseudo.expression(this.lbp);
                 this.pseudo.match(')');
                 return expr;
+            },
+            led: function (left) {
+                this.lambdaexpr = left;
+                this.bindings = [];
+                while (!this.pseudo.testMatch(')')) {
+                    this.bindings.push(this.pseudo.expression(this.lbp));
+                    if (this.pseudo.testMatch(',')) {
+                        this.pseudo.next();
+                    }
+                }
+                this.pseudo.match(')');
+                return this;
+            },
+            evl: function () {
+                var l = this.lambdaexpr.evl();
+                var b = {};
+                if (this.bindings.length != l.bindings.length) {
+                    throw "Wrong number of arguments in function call";
+                }
+                for (var i = 0; i < this.bindings.length; ++i) {
+                    b[l.bindings[i].id] = this.bindings[i].evl();
+                }
+                this.pseudo.pushScope(b);
+                var r = l.block.evl();
+                this.pseudo.popScope();
+                return r;
             }
         });
 
+        token(',', { lbp: 10 });
+
         infix('+', 1000, function () {
             return this.first.evl() + this.second.evl();
+        });
+        infix('-', 1000, function () {
+            return this.first.evl() - this.second.evl();
         });
         infix('*', 2000, function () {
             return this.first.evl() * this.second.evl();
@@ -197,7 +256,7 @@ var Pseudo = (function () {
         return _p;
     })();
 
-    var makeScope = function (parent) {
+    var makeScope = function (parent, bindings) {
         var s = Object.create({
             findScope: function (name) {
                 if (name in this.bindings) {
@@ -225,7 +284,7 @@ var Pseudo = (function () {
                 }
             }
         });
-        s.bindings = {};
+        s.bindings = bindings || {};
         s.parent = parent || null;
         return s;
     };
@@ -281,7 +340,7 @@ var Pseudo = (function () {
                     this.addToken('(');
                 } else if (m = text.match(/^\)/)) {
                     this.addToken(')');
-                } else if (m = text.match(/^(?:\+|\*|==?|\!=|:)/)) {
+                } else if (m = text.match(/^(?:\+|\-|\*|==?|\!=|,|:)/)) {
                     this.addToken(m[0]);
                 } else if (m = text.match(/^[a-zA-Z][a-zA-Z0-9_]*/)) {
                     if (m[0] in tproto) {
@@ -363,7 +422,17 @@ var Pseudo = (function () {
         },
 
         global: function (name) {
-            return this.scope.bindings[name];
+            return this.rootScope.load(name);
+        },
+
+        pushScope: function (bindings) {
+            this.scope = makeScope(this.scope, bindings);
+        },
+
+        popScope: function () {
+            if (this.scope != this.rootScope) {
+                this.scope = this.scope.parent;
+            }
         }
     };
 
@@ -372,6 +441,7 @@ var Pseudo = (function () {
         pseudo.text = text;
         pseudo.env = env || {};
         pseudo.scope = makeScope();
+        pseudo.rootScope = pseudo.scope;
         return pseudo;
     };
 
