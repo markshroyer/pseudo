@@ -157,4 +157,12 @@ QUnit.test("Function definition and invocation", function (assert) {
         '',
         'factorial(6)'
     )).evl(), 720, "Recursive factorial");
+
+    assert.equal(Pseudo.create(ml(
+        'def my_function(n):',
+        '    n * 3',
+        '',
+        'times_three = my_function',
+        'times_three(9)'
+    )).evl(), 27, "Function reference assignment");
 });
