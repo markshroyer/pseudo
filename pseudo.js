@@ -193,9 +193,9 @@ var Pseudo = (function () {
 
         token(')', { lbp: 10 });
         token('(', {
-            lbp: 10,
+            lbp: 10000,
             nud: function () {
-                var expr = this.pseudo.expression(this.lbp);
+                var expr = this.pseudo.expression(10);
                 this.pseudo.match(')');
                 return expr;
             },
@@ -203,7 +203,7 @@ var Pseudo = (function () {
                 this.lambdaexpr = left;
                 this.bindings = [];
                 while (!this.pseudo.testMatch(')')) {
-                    this.bindings.push(this.pseudo.expression(this.lbp));
+                    this.bindings.push(this.pseudo.expression(10));
                     if (this.pseudo.testMatch(',')) {
                         this.pseudo.next();
                     }
