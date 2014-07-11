@@ -99,10 +99,10 @@ var Pseudo = (function () {
 
         token('(end)', { lbp: 0 });
 
-        token(':', { lbp: 1 });
+        token(':', { lbp: 0 });
 
         token('if', {
-            lbp: 1,
+            lbp: 0,
             nud: function () {
                 this.test = this.pseudo.expression(this.lbp);
                 this.pseudo.match(':');
@@ -129,10 +129,10 @@ var Pseudo = (function () {
             }
         });
 
-        token('else', { lbp: 1 });
+        token('else', { lbp: 0 });
 
         token('while', {
-            lbp: 1,
+            lbp: 0,
             nud: function () {
                 this.test = this.pseudo.expression(this.lbp);
                 this.pseudo.match(':');
@@ -191,11 +191,11 @@ var Pseudo = (function () {
             token(id, t);
         };
 
-        token(')', { lbp: 10 });
+        token(')', { lbp: 0 });
         token('(', {
             lbp: 10000,
             nud: function () {
-                var expr = this.pseudo.expression(10);
+                var expr = this.pseudo.expression(0);
                 this.pseudo.match(')');
                 return expr;
             },
@@ -227,7 +227,7 @@ var Pseudo = (function () {
             }
         });
 
-        token(',', { lbp: 10 });
+        token(',', { lbp: 0 });
 
         infix('+', 1000, function () {
             return this.first.evl() + this.second.evl();
