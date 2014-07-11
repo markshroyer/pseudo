@@ -107,7 +107,15 @@ var Pseudo = (function () {
                 this.test = this.pseudo.expression(this.lbp);
                 this.pseudo.match(':');
                 this.block = this.pseudo.parseBlock();
-                if (this.pseudo.testMatch('else')) {
+                if (this.pseudo.testMatch('elif')) {
+                    // Parse the elif block as a nested if statement
+                    var elif = Object.create(_p['if']);
+                    elif.pseudo = this.pseudo;
+
+                    // Not actually a block instance
+                    this.pseudo.next();
+                    this.elseblock = elif.nud();
+                } else if (this.pseudo.testMatch('else')) {
                     this.pseudo.next();
                     this.pseudo.match(':');
                     this.elseblock = this.pseudo.parseBlock();
@@ -129,6 +137,7 @@ var Pseudo = (function () {
             }
         });
 
+        token('elif', { lbp: 0 });
         token('else', { lbp: 0 });
 
         token('while', {

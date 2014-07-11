@@ -117,6 +117,64 @@ QUnit.test("If else block", function (assert) {
     assert.equal(p.evl(), 101, "Else should be evaluated iff the condition is false");
 });
 
+QUnit.test("If/elif/else", function (assert) {
+    assert.equal(Pseudo.create(ml(
+        'a = b = c = 0',
+        'd = 2',
+        '',
+        'if d == 1:',
+        '    a = 1',
+        'elif d == 2:',
+        '    b = 2',
+        'else:',
+        '    c = 4',
+        '',
+        'a + b + c'
+    )).evl(), 2, "Support elif statement");
+
+    assert.equal(Pseudo.create(ml(
+        'a = b = c = 0',
+        'd = 3',
+        '',
+        'if d == 1:',
+        '    a = 1',
+        'elif d == 2:',
+        '    b = 2',
+        'else:',
+        '    c = 4',
+        '',
+        'a + b + c'
+    )).evl(), 4, "Support elif statement 2");
+
+    assert.equal(Pseudo.create(ml(
+        'a = b = c = 0',
+        'd = 3',
+        '',
+        'if d == 1:',
+        '    a = 1',
+        'elif d == 2:',
+        '    b = 2',
+        '',
+        'a + b + c'
+    )).evl(), 0, "Support elif statement without else block");
+
+    assert.equal(Pseudo.create(ml(
+        'r = 0',
+        'n = 3',
+        '',
+        'if n == 1:',
+        '    r = r + 1',
+        'elif n == 2:',
+        '    r = r + 2',
+        'elif n == 3:',
+        '    r = r + 4',
+        'else:',
+        '    r = r + 8',
+        '',
+        'r'
+    )).evl(), 4, "Multiple elif blocks");
+});
+
 QUnit.test("While loop", function (assert) {
     var text = ml(
         'i = 1',
