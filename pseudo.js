@@ -105,8 +105,7 @@ var Pseudo = (function () {
             lbp: 0,
             nud: function () {
                 this.test = this.pseudo.expression(this.lbp);
-                this.pseudo.match(':');
-                this.block = this.pseudo.parseBlock();
+                this.block = this.pseudo.parseSubBlock();
                 if (this.pseudo.testMatch('elif')) {
                     // Parse the elif block as a nested if statement
                     var elif = Object.create(_p['if']);
@@ -117,8 +116,7 @@ var Pseudo = (function () {
                     this.elseblock = elif.nud();
                 } else if (this.pseudo.testMatch('else')) {
                     this.pseudo.next();
-                    this.pseudo.match(':');
-                    this.elseblock = this.pseudo.parseBlock();
+                    this.elseblock = this.pseudo.parseSubBlock();
                 }
                 return this;
             },
@@ -144,8 +142,7 @@ var Pseudo = (function () {
             lbp: 0,
             nud: function () {
                 this.test = this.pseudo.expression(this.lbp);
-                this.pseudo.match(':');
-                this.block = this.pseudo.parseBlock();
+                this.block = this.pseudo.parseSubBlock();
                 return this;
             },
             evl: function () {
@@ -162,8 +159,7 @@ var Pseudo = (function () {
                 // TODO Ensure proto's lambdaexpr and bindings are just
                 // names, throw error otherwise
                 this.proto = this.pseudo.expression(1);
-                this.pseudo.match(':');
-                this.block = this.pseudo.parseBlock();
+                this.block = this.pseudo.parseSubBlock();
                 return this;
             },
             evl: function () {
@@ -395,6 +391,11 @@ var Pseudo = (function () {
             } else {
                 throw "Expected: " + t;
             }
+        },
+
+        parseSubBlock: function () {
+            this.match(':');
+            return this.parseBlock();
         },
 
         parseBlock: function () {
