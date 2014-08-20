@@ -180,6 +180,16 @@ QUnit.test("If/elif/else", function (assert) {
         'if a == 2: b = 4',
         'b'
     )).evl(), 4, "Single-line block");
+
+    assert.equal(Pseudo.create(ml(
+        'a = 2',
+        'b = 3',
+        '',
+        'if a == 1: b = 4',
+        'else: b = 5',
+        '',
+        'b'
+    )).evl(), 5, "Single-line if-else blocks");
 });
 
 QUnit.test("While loop", function (assert) {
