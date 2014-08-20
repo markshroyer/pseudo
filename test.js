@@ -173,6 +173,13 @@ QUnit.test("If/elif/else", function (assert) {
         '',
         'r'
     )).evl(), 4, "Multiple elif blocks");
+
+    assert.equal(Pseudo.create(ml(
+        'a = 2',
+        'b = 3',
+        'if a == 2: b = 4',
+        'b'
+    )).evl(), 4, "Single-line block");
 });
 
 QUnit.test("While loop", function (assert) {

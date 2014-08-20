@@ -395,7 +395,18 @@ var Pseudo = (function () {
 
         parseSubBlock: function () {
             this.match(':');
-            return this.parseBlock();
+            return this.parseSingleLineBlock();
+        },
+
+        parseSingleLineBlock: function () {
+            if (this.testMatch('(block)')) {
+                return this.parseBlock();
+            } else {
+                var b = Object.create(tproto['(block)']);
+                b.subexprs = [this.expression(2)];
+                this.match('(nl)');
+                return b;
+            }
         },
 
         parseBlock: function () {
